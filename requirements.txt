@@ -1,0 +1,14 @@
+# 오늘의 급등이슈 자동화 프로젝트
+# Python 3.8+ 필요
+
+# 구글 시트 연동
+gspread==6.1.2
+google-auth==2.27.0
+google-auth-oauthlib==1.2.0
+
+# 이미지 처리
+Pillow==10.2.0
+
+# HTML 렌더링 (스크린샷)
+playwright==1.40.0
+

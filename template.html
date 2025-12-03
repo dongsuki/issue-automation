@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘의 급등 이슈</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f1f5f9;
+            color: #334155;
+            margin: 0;
+            padding: 0;
+        }
+        /* 전체 페이지 래퍼 - 그라데이션 전체 적용 */
+        #page {
+            width: 1280px;
+            height: 1750px;
+            background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+        }
+        /* 캡처 영역 - 내부 콘텐츠 */
+        #capture-area {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+        }
+        /* 카드 디자인 - 그림자 강화 */
+        .clean-card {
+            background-color: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        /* 말풍선 효과 - 높이 완전 고정 (원래 크기 유지) */
+        .speech-bubble {
+            position: relative;
+            background: #eff6ff;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #dbeafe;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* 노란 형광펜 효과 */
+        .highlight-yellow {
+            background: linear-gradient(transparent 30%, #fef08a 30%, #fef08a 80%, transparent 80%);
+            padding: 2px 6px;
+        }
+        
+        /* 개별이슈 레이아웃 고정 */
+        .individual-item {
+            height: 165px;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 8px;
+        }
+        .individual-header {
+            height: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .individual-desc {
+            height: 120px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body class="p-0 m-0">
+
+    <!-- 전체 페이지 래퍼 (그라데이션 배경) -->
+    <div id="page">
+    <!-- 메인 캔버스 영역 -->
+    <div id="capture-area" class="p-12 relative">
+        
+        <!-- 헤더 영역 -->
+        <header class="flex items-end justify-between mb-10 pb-6 border-b-2 border-slate-200">
+            <div>
+                <div class="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-1.5 rounded-full text-xl font-bold mb-3 shadow-sm">
+                    <i class="fa-regular fa-calendar-check"></i>
+                    <span id="date-display">2025.12.03</span>
+                </div>
+                <h1 class="text-6xl font-black tracking-tight text-slate-800">
+                    오늘의 <span class="text-red-500">급등이슈</span> 정리
+                </h1>
+            </div>
+            <div class="text-right">
+                <div class="text-slate-500 font-semibold text-xl mb-1 flex items-center justify-end gap-2">
+                    <i class="fa-solid fa-chart-simple"></i> Daily Market Brief
+                </div>
+                <p class="text-2xl font-bold text-slate-400">By. 상한가추월차선</p>
+            </div>
+        </header>
+
+        <!-- 그리드 컨테이너 -->
+        <div id="card-container" class="grid grid-cols-3 gap-8 content-start">
+            <!-- 자바스크립트 렌더링 영역 -->
+        </div>
+    </div>
+
+    <script>
+        // 데이터는 Python에서 주입됨
+        const cardsData = /*CARDS_DATA_PLACEHOLDER*/[];
+        const dateStr = "/*DATE_PLACEHOLDER*/";
+
+        // 날짜 설정 - 항상 적용
+        if (dateStr) {
+            document.getElementById('date-display').innerText = dateStr;
+        }
+
+        function createCardHTML(card) {
+            let contentHTML = '';
+
+            // TYPE A: 테마형
+            if (card.card_type === "theme") {
+                const listItems = card.stocks.map(item => {
+                    // 등락률에서 숫자만 추출
+                    const rateNum = parseFloat(item.change_rate.replace('%', '').replace('+', ''));
+                    // 바 차트 길이 (최대 30% 기준)
+                    const barWidth = Math.min(Math.max((rateNum / 30) * 100, 10), 100);
+                    // 색상 단계: 상한가(29%이상)는 진한 빨강
+                    const barColorClass = rateNum >= 29 ? 'bg-red-500' : 'bg-red-400';
+                    const bgBarColor = rateNum >= 29 ? 'bg-red-100' : 'bg-slate-100';
+                    
+                    return `
+                    <div class="py-3 border-b border-slate-100 last:border-0">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold text-slate-800 text-2xl tracking-tight truncate flex items-center gap-2">
+                                ${item.name}
+                            </span>
+                            <span class="font-bold text-red-500 text-2xl font-mono">
+                                ${item.change_rate}
+                            </span>
+                        </div>
+                        <!-- 프로그레스 바 -->
+                        <div class="w-full ${bgBarColor} rounded-full h-3 overflow-hidden">
+                            <div class="${barColorClass} h-3 rounded-full opacity-90" style="width: ${barWidth}%"></div>
+                        </div>
+                    </div>
+                `}).join('');
+
+                contentHTML = `
+                    <!-- 설명 박스: 말풍선 스타일 -->
+                    <div class="speech-bubble mb-6">
+                        <p class="text-2xl font-bold text-slate-700 leading-relaxed break-keep text-center">
+                            "${card.main_issue || ''}"
+                        </p>
+                    </div>
+                    <div class="space-y-1 px-1">
+                        ${listItems}
+                    </div>
+                `;
+            } 
+            // TYPE B: 개별이슈형 - 글자 줄이고, 레이아웃 고정
+            else if (card.card_type === "individual") {
+                contentHTML = card.stocks.map(item => `
+                    <div class="individual-item">
+                        <div class="individual-header">
+                            <span class="font-bold text-slate-900 text-2xl">${item.name}</span>
+                            <span class="font-bold text-red-500 text-2xl font-mono">${item.change_rate}</span>
+                        </div>
+                        <div class="individual-desc speech-bubble">
+                            <p class="text-xl font-bold text-slate-700 leading-snug break-keep text-center">
+                                ${item.issue || ''}
+                            </p>
+                        </div>
+                    </div>
+                `).join('');
+                contentHTML = `<div class="flex flex-col justify-start gap-3">${contentHTML}</div>`;
+            }
+
+            // 헤더 색상 설정
+            const headerColorClass = card.card_type === "theme" ? "text-blue-600" : "text-slate-700";
+            const iconClass = card.card_type === "theme" ? "fa-layer-group" : "fa-check-double";
+            const bottomBarColor = card.card_type === "theme" ? "bg-blue-500" : "bg-slate-400";
+
+            return `
+                <div class="clean-card overflow-hidden flex flex-col h-[720px]">
+                    <!-- 카드 헤더 -->
+                    <div class="px-8 pt-8 pb-4 border-b border-slate-100 bg-white">
+                        <div class="flex items-center gap-3">
+                            <h2 class="text-4xl font-black tracking-tight ${headerColorClass}">
+                                ${card.group_name}
+                            </h2>
+                            <i class="fa-solid ${iconClass} text-slate-300 text-2xl ml-auto"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- 내용물 -->
+                    <div class="p-8 flex-1 bg-white">
+                        ${contentHTML}
+                    </div>
+                    
+                    <!-- 하단 데코레이션 바 -->
+                    <div class="h-2 w-full ${bottomBarColor}"></div>
+                </div>
+            `;
+        }
+
+        function renderCards() {
+            const container = document.getElementById('card-container');
+            container.innerHTML = ''; 
+            cardsData.forEach(card => {
+                const cardHTML = createCardHTML(card);
+                container.innerHTML += cardHTML;
+            });
+        }
+
+        // 페이지 로드 시 렌더링
+        if (cardsData.length > 0) {
+            renderCards();
+        }
+    </script>
+    </div> <!-- #capture-area 닫기 -->
+    </div> <!-- #page 닫기 -->
+</body>
+</html>

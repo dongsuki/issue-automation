@@ -36,8 +36,8 @@ jobs:
     - name: 패키지 설치
       run: |
         pip install -r requirements.txt
-        playwright install chromium
-        sudo playwright install-deps chromium
+        python -m playwright install chromium
+        sudo python -m playwright install-deps chromium
     
     - name: 서비스 계정 키 생성
       env:

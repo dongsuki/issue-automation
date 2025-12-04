@@ -5,7 +5,7 @@ on:
 
 jobs:
   generate-image:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     
     steps:
     - name: 체크아웃
@@ -15,12 +15,29 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
+        cache: 'pip'
+    
+    - name: Python 패키지 캐시
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Playwright 캐시
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-playwright-
     
     - name: 패키지 설치
       run: |
         pip install -r requirements.txt
         playwright install chromium
-        playwright install-deps
+        sudo playwright install-deps chromium
     
     - name: 서비스 계정 키 생성
       env:

@@ -84,6 +84,15 @@ class SheetReaderRanking:
         Returns:
             등락률 순위 데이터 리스트
         """
+        import re
+        
+        # 오늘 날짜 (년.월.일 형식: 25.12.04)
+        today = datetime.now()
+        today_short = today.strftime("%y.%m.%d")  # 25.12.04
+        today_md = today.strftime("%m.%d")  # 12.04
+        
+        print(f"📅 오늘 날짜: {today_short}")
+        
         # 시트2 데이터 가져오기
         worksheet = self.sheet.get_worksheet(1)  # 시트2
         all_records = worksheet.get_all_records()
@@ -98,14 +107,20 @@ class SheetReaderRanking:
                 
             change_rate_num = self._extract_number(change_rate_str)
             
+            # 내용 가져오기
+            content = str(row.get('내용', row.get('F', ''))).strip()
+            
+            # 내용에서 날짜 추출 및 처리
+            content = self._process_content_date(content, today_short, today_md)
+            
             stock = RankingStock(
-                date="",  # 날짜는 사용하지 않음
+                date="",
                 material=str(row.get('재료', row.get('B', ''))).strip(),
                 stock_name=str(row.get('종목명', row.get('C', ''))).strip(),
                 change_rate=change_rate_num,
                 change_rate_str=self._format_change_rate(change_rate_str),
                 volume=self._format_volume(str(row.get('거래대금(백만)', row.get('E', ''))).strip()),
-                content=str(row.get('내용', row.get('F', ''))).strip()
+                content=content
             )
             
             # 빈 데이터 제외
@@ -114,6 +129,68 @@ class SheetReaderRanking:
                     
         print(f"📊 시트2 데이터: {len(ranking_data)}개 행")
         return ranking_data
+    
+    def _process_content_date(self, content: str, today_short: str, today_md: str) -> str:
+        """
+        내용에서 날짜를 추출하고, 오늘이 아니면 [년.월.일] 형식으로 앞에 추가
+        
+        지원 형식:
+        - 2025.12.02 또는 25.12.02 (년.월.일)
+        - 12.02 (월.일)
+        - 2025-12-02 또는 25-12-02 (년-월-일)
+        - 12-02 (월-일)
+        """
+        import re
+        
+        if not content:
+            return content
+        
+        # 날짜 패턴들 (내용 시작 부분에서 찾기)
+        patterns = [
+            # 2025.12.02 또는 25.12.02 형식
+            (r'^(20)?(\d{2})\.(\d{1,2})\.(\d{1,2})\s*', 'ymd_dot'),
+            # 2025-12-02 또는 25-12-02 형식
+            (r'^(20)?(\d{2})-(\d{1,2})-(\d{1,2})\s*', 'ymd_dash'),
+            # 12.02 형식 (월.일만)
+            (r'^(\d{1,2})\.(\d{1,2})\s*', 'md_dot'),
+            # 12-02 형식 (월-일만)
+            (r'^(\d{1,2})-(\d{1,2})\s*', 'md_dash'),
+        ]
+        
+        for pattern, pattern_type in patterns:
+            match = re.match(pattern, content)
+            if match:
+                # 날짜 추출 및 정규화
+                if pattern_type in ['ymd_dot', 'ymd_dash']:
+                    # 년.월.일 형식
+                    year = match.group(2)
+                    month = match.group(3).zfill(2)
+                    day = match.group(4).zfill(2)
+                    extracted_date = f"{year}.{month}.{day}"
+                    extracted_md = f"{month}.{day}"
+                else:
+                    # 월.일 형식 (올해로 가정)
+                    month = match.group(1).zfill(2)
+                    day = match.group(2).zfill(2)
+                    year = today_short[:2]  # 올해 년도
+                    extracted_date = f"{year}.{month}.{day}"
+                    extracted_md = f"{month}.{day}"
+                
+                # 오늘 날짜인지 확인
+                if extracted_date == today_short or extracted_md == today_md:
+                    # 오늘 날짜면 날짜 부분 제거하고 내용만 반환
+                    content_without_date = content[match.end():].strip()
+                    return content_without_date if content_without_date else content
+                else:
+                    # 오늘이 아니면 [년.월.일] 형식으로 표시
+                    content_without_date = content[match.end():].strip()
+                    if content_without_date:
+                        return f"[{extracted_date}] {content_without_date}"
+                    else:
+                        return content
+        
+        # 날짜 패턴이 없으면 그대로 반환
+        return content
     
     def group_by_material(self, stocks: List[RankingStock]) -> List[MaterialGroup]:
         """

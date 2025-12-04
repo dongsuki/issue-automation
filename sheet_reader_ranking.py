@@ -87,10 +87,6 @@ class SheetReaderRanking:
         """
         # 오늘 날짜
         today = datetime.now()
-        today_ymd = today.strftime("%Y.%m.%d")  # 2025.12.04
-        today_ymd_short = today.strftime("%Y.%-m.%-d") if hasattr(today, 'strftime') else today.strftime("%Y.%m.%d").replace('.0', '.')  # 2025.12.4
-        
-        # Windows에서 %-m, %-d가 안 되므로 수동 처리
         today_year = today.year
         today_month = today.month
         today_day = today.day

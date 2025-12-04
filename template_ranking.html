@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>등락률 상위 정리</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #e2e8f0;
+        }
+        /* 캡처 영역 */
+        #capture-area {
+            width: 1600px; 
+            min-height: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 40px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        /* 메인 컨테이너 테두리 */
+        .main-container {
+            border: 3px solid #333;
+            border-radius: 20px;
+            overflow: hidden;
+            background-color: white;
+            position: relative;
+            margin-top: 20px;
+        }
+        /* 핑크색 타이틀 배지 */
+        .title-badge {
+            background-color: #ff007f;
+            color: white;
+            font-weight: 900;
+            font-size: 1.8rem;
+            padding: 12px 50px;
+            border-radius: 999px;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 20;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            border: 2px solid #333;
+        }
+        /* 테이블 스타일 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        /* 헤더 스타일 */
+        th {
+            background-color: #9ca3af;
+            color: white;
+            font-weight: 700;
+            padding: 14px 8px;
+            text-align: center;
+            border-right: 1px solid #e5e7eb;
+            font-size: 1.7rem;
+        }
+        th:last-child { border-right: none; }
+        /* 데이터 셀 스타일 */
+        td {
+            padding: 18px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: middle;
+            font-size: 1.05rem;
+            line-height: 1.4;
+        }
+        /* 교차 배경색 (zebra striping) - 재료 셀 제외 */
+        tbody tr:nth-child(odd) td:not(.theme-cell) {
+            background-color: #f9fafb;
+        }
+        tbody tr:nth-child(even) td:not(.theme-cell) {
+            background-color: white;
+        }
+        /* 재료 컬럼 */
+        .theme-cell {
+            text-align: center;
+            font-weight: 900;
+            font-size: 1.5rem;
+            color: #1f2937;
+            border-right: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+            word-break: keep-all;
+            line-height: 1.5;
+        }
+        /* 종목명 */
+        .cell-center { 
+            text-align: center;
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 1.55rem;
+        }
+        /* 등락률 */
+        .text-red { 
+            color: #dc2626; 
+            font-weight: 700;
+            text-align: center;
+            font-size: 1.55rem;
+        }
+        /* 거래대금 */
+        .text-orange { 
+            color: #ea580c; 
+            font-weight: 600;
+            text-align: center;
+            font-size: 1.55rem;
+        }
+        /* 내용 */
+        .text-gray-700 {
+            color: #374151;
+            font-weight: 500;
+            font-size: 1.65rem;
+            line-height: 1.75;
+        }
+        /* 마지막 줄 테두리 정리 */
+        tr:last-child td { border-bottom: none; }
+        /* 헤더 서브텍스트 (%, 백만) */
+        .header-sub {
+            font-size: 1.3rem;
+            font-weight: 400;
+        }
+    </style>
+</head>
+<body class="p-0 m-0">
+    <!-- 캡처 영역 -->
+    <div id="capture-area">
+        <!-- 타이틀 배지 -->
+        <div class="title-badge">등락률 상위</div>
+        <!-- 메인 박스 -->
+        <div class="main-container mt-8">
+            <table>
+                <colgroup>
+                    <col style="width: 10%">  <!-- 재료 -->
+                    <col style="width: 13%">  <!-- 종목명 -->
+                    <col style="width: 8%">   <!-- 등락률 -->
+                    <col style="width: 10%">  <!-- 거래대금 -->
+                    <col style="width: 59%">  <!-- 내용 -->
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>재료</th>
+                        <th>종목명</th>
+                        <th>등락률<br><span class="header-sub">(%)</span></th>
+                        <th>거래대금<br><span class="header-sub">(백만)</span></th>
+                        <th>내용</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- JS 렌더링 영역 -->
+                </tbody>
+            </table>
+        </div>
+        <!-- 하단 출처 -->
+        <div class="text-right mt-4 text-gray-400 font-bold text-xl">
+            By. 상한가추월차선
+        </div>
+    </div>
+
+    <script>
+        // 데이터는 Python에서 주입됨
+        const groupsData = /*GROUPS_DATA_PLACEHOLDER*/[];
+
+        // 재료명 3자씩 줄바꿈 (6자 이상일 때만)
+        function formatMaterial(material) {
+            if (material.length >= 6) {
+                // 3자씩 잘라서 <br>로 연결
+                let result = '';
+                for (let i = 0; i < material.length; i += 3) {
+                    if (i > 0) result += '<br>';
+                    result += material.substring(i, i + 3);
+                }
+                return result;
+            }
+            return material;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            
+            groupsData.forEach(group => {
+                const rowCount = group.stocks.length;
+                group.stocks.forEach((stock, index) => {
+                    const tr = document.createElement('tr');
+                    
+                    // 재료 - 그룹 첫 행에만 생성하고 rowspan 적용 (색상 적용)
+                    if (index === 0) {
+                        const tdTheme = document.createElement('td');
+                        tdTheme.className = 'theme-cell';
+                        tdTheme.rowSpan = rowCount; 
+                        tdTheme.innerHTML = formatMaterial(group.material);
+                        tdTheme.style.backgroundColor = group.color;
+                        tr.appendChild(tdTheme);
+                    }
+                    
+                    // 종목명 (흰색 배경)
+                    const tdName = document.createElement('td');
+                    tdName.className = 'cell-center';
+                    tdName.innerHTML = stock.stock_name.replace(/\n/g, '<br>');
+                    tr.appendChild(tdName);
+                    
+                    // 등락률 (흰색 배경)
+                    const tdRate = document.createElement('td');
+                    tdRate.className = 'text-red';
+                    tdRate.innerText = stock.change_rate_str;
+                    tr.appendChild(tdRate);
+                    
+                    // 거래대금 (흰색 배경)
+                    const tdVolume = document.createElement('td');
+                    tdVolume.className = 'text-orange';
+                    tdVolume.innerText = stock.volume;
+                    tr.appendChild(tdVolume);
+                    
+                    // 내용 (흰색 배경)
+                    const tdReason = document.createElement('td');
+                    tdReason.className = 'text-gray-700';
+                    tdReason.innerText = stock.content;
+                    tr.appendChild(tdReason);
+                    
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        // 페이지 로드 시 렌더링
+        if (groupsData.length > 0) {
+            renderTable();
+        }
+    </script>
+</body>
+</html>
+

@@ -24,13 +24,13 @@
 2. GitHub Actions 탭 → `Run workflow` 클릭
 3. 생성된 이미지 다운로드
 
-👉 [자세한 사용법 보기](2_GitHub사용법.md)
+👉 **[GitHub 사용법 보기 (필독!)](GitHub_사용법.md)**
 
 ---
 
 ### 방법 2: 로컬 설치
 
-### 1. 설치
+#### 1. 설치
 
 ```bash
 # 레포지토리 클론
@@ -44,7 +44,7 @@ pip install -r requirements.txt
 python -m playwright install chromium
 ```
 
-### 2. 구글 API 설정
+#### 2. 구글 API 설정
 
 1. [Google Cloud Console](https://console.cloud.google.com/)에서 프로젝트 생성
 2. Google Sheets API 활성화
@@ -52,7 +52,7 @@ python -m playwright install chromium
 4. 다운로드한 JSON 키를 `service_account.json.json` 이름으로 프로젝트 폴더에 저장
 5. 구글 시트를 서비스 계정 이메일과 공유
 
-### 3. 구글 시트 준비
+#### 3. 구글 시트 준비
 
 시트에 아래 형식으로 데이터 입력:
 
@@ -67,7 +67,7 @@ python -m playwright install chromium
 - **개별**: 3개씩 자동 분리
 - **이슈내용**: 테마는 첫 행에만, 개별은 모든 행에 입력
 
-### 4. 실행
+#### 4. 실행
 
 **Windows:**
 ```bash
@@ -90,7 +90,7 @@ python main.py --date 2025.12.04  # 특정 날짜 지정
 python main.py --test             # 테스트 데이터로 실행
 ```
 
-### 5. 결과 확인
+#### 5. 결과 확인
 
 생성된 이미지는 `output` 폴더에 저장됩니다:
 ```

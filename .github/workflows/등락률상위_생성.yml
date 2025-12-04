@@ -1,0 +1,49 @@
+name: 등락률 상위 자동 생성
+
+on:
+  workflow_dispatch:  # 수동 실행만 가능
+
+jobs:
+  generate-image:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 체크아웃
+      uses: actions/checkout@v3
+    
+    - name: Python 설정
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: 패키지 설치
+      run: |
+        pip install -r requirements.txt
+        playwright install chromium
+        playwright install-deps
+    
+    - name: 서비스 계정 키 생성
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+      run: |
+        echo "$GOOGLE_CREDENTIALS" > service_account.json.json
+    
+    - name: 등락률 상위 이미지 생성
+      run: python main_ranking.py
+    
+    - name: 생성된 이미지 업로드
+      uses: actions/upload-artifact@v3
+      with:
+        name: 등락률상위_이미지
+        path: output/등락률상위_*.png
+        retention-days: 30
+    
+    - name: 이미지를 레포지토리에 커밋 (선택사항)
+      if: success()
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add output/등락률상위_*.png || true
+        git commit -m "자동 생성: 등락률상위 $(date +'%Y.%m.%d')" || true
+        git push || true
+

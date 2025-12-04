@@ -55,7 +55,7 @@ jobs:
     - name: 생성된 이미지 업로드
       uses: actions/upload-artifact@v4
       with:
-        name: 등락률상위_이미지
+        name: ranking-images
         path: output/등락률상위_*.png
         retention-days: 30
     

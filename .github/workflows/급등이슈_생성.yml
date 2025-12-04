@@ -55,7 +55,7 @@ jobs:
     - name: 생성된 이미지 업로드
       uses: actions/upload-artifact@v4
       with:
-        name: 급등이슈_이미지
+        name: stock-issue-images
         path: output/급등이슈_*.png
         retention-days: 30
     

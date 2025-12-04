@@ -80,18 +80,22 @@ class SheetReaderRanking:
     def get_ranking_data(self) -> List[RankingStock]:
         """
         시트2에서 등락률 순위 데이터를 가져옴 (모든 데이터)
+        A열의 날짜가 오늘이 아니면 내용 앞에 [년.월.일] 형식으로 추가
         
         Returns:
             등락률 순위 데이터 리스트
         """
-        import re
-        
-        # 오늘 날짜 (년.월.일 형식: 25.12.04)
+        # 오늘 날짜
         today = datetime.now()
-        today_short = today.strftime("%y.%m.%d")  # 25.12.04
-        today_md = today.strftime("%m.%d")  # 12.04
+        today_ymd = today.strftime("%Y.%m.%d")  # 2025.12.04
+        today_ymd_short = today.strftime("%Y.%-m.%-d") if hasattr(today, 'strftime') else today.strftime("%Y.%m.%d").replace('.0', '.')  # 2025.12.4
         
-        print(f"📅 오늘 날짜: {today_short}")
+        # Windows에서 %-m, %-d가 안 되므로 수동 처리
+        today_year = today.year
+        today_month = today.month
+        today_day = today.day
+        
+        print(f"📅 오늘 날짜: {today_year}.{today_month}.{today_day}")
         
         # 시트2 데이터 가져오기
         worksheet = self.sheet.get_worksheet(1)  # 시트2
@@ -107,14 +111,17 @@ class SheetReaderRanking:
                 
             change_rate_num = self._extract_number(change_rate_str)
             
+            # A열에서 날짜 가져오기
+            date_str = str(row.get('날짜', row.get('A', ''))).strip()
+            
             # 내용 가져오기
             content = str(row.get('내용', row.get('F', ''))).strip()
             
-            # 내용에서 날짜 추출 및 처리
-            content = self._process_content_date(content, today_short, today_md)
+            # 날짜가 오늘이 아니면 내용 앞에 [년.월.일] 추가
+            content = self._add_date_prefix(date_str, content, today_year, today_month, today_day)
             
             stock = RankingStock(
-                date="",
+                date=date_str,
                 material=str(row.get('재료', row.get('B', ''))).strip(),
                 stock_name=str(row.get('종목명', row.get('C', ''))).strip(),
                 change_rate=change_rate_num,
@@ -130,67 +137,48 @@ class SheetReaderRanking:
         print(f"📊 시트2 데이터: {len(ranking_data)}개 행")
         return ranking_data
     
-    def _process_content_date(self, content: str, today_short: str, today_md: str) -> str:
+    def _add_date_prefix(self, date_str: str, content: str, today_year: int, today_month: int, today_day: int) -> str:
         """
-        내용에서 날짜를 추출하고, 오늘이 아니면 [년.월.일] 형식으로 앞에 추가
+        A열의 날짜가 오늘이 아니면 내용 앞에 [년.월.일] 형식으로 추가
         
-        지원 형식:
-        - 2025.12.02 또는 25.12.02 (년.월.일)
-        - 12.02 (월.일)
-        - 2025-12-02 또는 25-12-02 (년-월-일)
-        - 12-02 (월-일)
+        Args:
+            date_str: A열의 날짜 문자열 (예: "2025.12.4", "2025.12.04", "25.12.4")
+            content: 내용
+            today_year, today_month, today_day: 오늘 날짜
+        
+        Returns:
+            처리된 내용
         """
         import re
         
-        if not content:
+        if not date_str or not content:
             return content
         
-        # 날짜 패턴들 (내용 시작 부분에서 찾기)
-        patterns = [
-            # 2025.12.02 또는 25.12.02 형식
-            (r'^(20)?(\d{2})\.(\d{1,2})\.(\d{1,2})\s*', 'ymd_dot'),
-            # 2025-12-02 또는 25-12-02 형식
-            (r'^(20)?(\d{2})-(\d{1,2})-(\d{1,2})\s*', 'ymd_dash'),
-            # 12.02 형식 (월.일만)
-            (r'^(\d{1,2})\.(\d{1,2})\s*', 'md_dot'),
-            # 12-02 형식 (월-일만)
-            (r'^(\d{1,2})-(\d{1,2})\s*', 'md_dash'),
-        ]
+        # 날짜 파싱 (2025.12.4, 2025.12.04, 25.12.4 등 지원)
+        # 패턴: 년도(2자리 또는 4자리).월.일
+        match = re.match(r'^(20)?(\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})$', date_str.strip())
         
-        for pattern, pattern_type in patterns:
-            match = re.match(pattern, content)
-            if match:
-                # 날짜 추출 및 정규화
-                if pattern_type in ['ymd_dot', 'ymd_dash']:
-                    # 년.월.일 형식
-                    year = match.group(2)
-                    month = match.group(3).zfill(2)
-                    day = match.group(4).zfill(2)
-                    extracted_date = f"{year}.{month}.{day}"
-                    extracted_md = f"{month}.{day}"
-                else:
-                    # 월.일 형식 (올해로 가정)
-                    month = match.group(1).zfill(2)
-                    day = match.group(2).zfill(2)
-                    year = today_short[:2]  # 올해 년도
-                    extracted_date = f"{year}.{month}.{day}"
-                    extracted_md = f"{month}.{day}"
-                
-                # 오늘 날짜인지 확인
-                if extracted_date == today_short or extracted_md == today_md:
-                    # 오늘 날짜면 날짜 부분 제거하고 내용만 반환
-                    content_without_date = content[match.end():].strip()
-                    return content_without_date if content_without_date else content
-                else:
-                    # 오늘이 아니면 [년.월.일] 형식으로 표시
-                    content_without_date = content[match.end():].strip()
-                    if content_without_date:
-                        return f"[{extracted_date}] {content_without_date}"
-                    else:
-                        return content
+        if not match:
+            return content
         
-        # 날짜 패턴이 없으면 그대로 반환
-        return content
+        # 날짜 추출
+        year = int(match.group(2))  # 2자리 년도 (예: 25)
+        month = int(match.group(3))
+        day = int(match.group(4))
+        
+        # 4자리 년도로 변환 (25 -> 2025)
+        full_year = 2000 + year if year < 100 else year
+        
+        # 오늘 날짜인지 확인
+        is_today = (full_year == today_year and month == today_month and day == today_day)
+        
+        if is_today:
+            # 오늘이면 그대로 반환
+            return content
+        else:
+            # 오늘이 아니면 [년.월.일] 형식으로 앞에 추가
+            date_prefix = f"[{year:02d}.{month:02d}.{day:02d}]"
+            return f"{date_prefix} {content}"
     
     def group_by_material(self, stocks: List[RankingStock]) -> List[MaterialGroup]:
         """

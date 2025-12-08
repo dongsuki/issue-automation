@@ -231,9 +231,9 @@ class SheetReaderRanking:
                 )
                 single_stock_groups.append(group)
         
-        # 각 그룹 내에서 등락률 기준으로 정렬
-        multi_stock_groups.sort(key=lambda g: g.stocks[0].change_rate, reverse=True)
-        single_stock_groups.sort(key=lambda g: g.stocks[0].change_rate, reverse=True)
+        # 각 그룹을 종목 등락률 합계 기준으로 정렬
+        multi_stock_groups.sort(key=lambda g: sum(s.change_rate for s in g.stocks), reverse=True)
+        single_stock_groups.sort(key=lambda g: sum(s.change_rate for s in g.stocks), reverse=True)
         
         # 2개 이상 재료 먼저, 1개 재료 나중에
         groups = multi_stock_groups + single_stock_groups

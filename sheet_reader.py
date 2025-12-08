@@ -176,8 +176,27 @@ class SheetReader:
         # 결과 리스트 생성
         cards: List[CardData] = []
         
+        # 테마 그룹을 등락률 합계 기준으로 정렬
+        def get_group_rate_sum(group_data):
+            """그룹 내 종목 등락률 합계 계산"""
+            total = 0.0
+            for stock in group_data['stocks']:
+                try:
+                    # "+29.97%" -> 29.97 형태로 변환
+                    rate_str = stock.change_rate.replace('+', '').replace('%', '').strip()
+                    total += float(rate_str)
+                except (ValueError, AttributeError):
+                    pass
+            return total
+        
+        sorted_theme_groups = sorted(
+            theme_groups.items(),
+            key=lambda x: get_group_rate_sum(x[1]),
+            reverse=True
+        )
+        
         # 테마 카드들 추가 (5개 초과 시 분리)
-        for group_name, data in theme_groups.items():
+        for group_name, data in sorted_theme_groups:
             stocks = data['stocks']
             main_issue = data['main_issue']
             

@@ -195,9 +195,19 @@ class SheetReader:
             reverse=True
         )
         
+        # 등락률 파싱 헬퍼 함수
+        def parse_rate(stock):
+            """종목의 등락률을 숫자로 변환"""
+            try:
+                rate_str = stock.change_rate.replace('+', '').replace('%', '').strip()
+                return float(rate_str)
+            except (ValueError, AttributeError):
+                return 0.0
+        
         # 테마 카드들 추가 (5개 초과 시 분리)
         for group_name, data in sorted_theme_groups:
-            stocks = data['stocks']
+            # 테마 내 종목을 등락률 높은 순으로 정렬
+            stocks = sorted(data['stocks'], key=parse_rate, reverse=True)
             main_issue = data['main_issue']
             
             if len(stocks) <= MAX_STOCKS_PER_CARD:
@@ -221,9 +231,10 @@ class SheetReader:
                     ))
                     print(f"  📦 테마 카드: {group_name} #{i+1} ({len(chunk)}종목)")
             
-        # 개별이슈: 3개씩 청킹
+        # 개별이슈: 등락률 높은 순으로 정렬 후 3개씩 청킹
         if individual_items:
-            chunks = self._chunk_list(individual_items, 3)
+            individual_items_sorted = sorted(individual_items, key=parse_rate, reverse=True)
+            chunks = self._chunk_list(individual_items_sorted, 3)
             for i, chunk in enumerate(chunks):
                 cards.append(CardData(
                     card_type='individual',

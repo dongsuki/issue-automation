@@ -6,6 +6,9 @@ gspread==6.1.2
 google-auth==2.27.0
 google-auth-oauthlib==1.2.0
 
+# Airtable 연동 (답안지용)
+pyairtable==2.3.3
+
 # 이미지 처리
 Pillow==10.2.0
 

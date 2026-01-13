@@ -1,6 +1,7 @@
 # 보안 - 절대 업로드 금지
 service_account.json.json
 *.json.json
+config_airtable.py
 
 # Python
 __pycache__/

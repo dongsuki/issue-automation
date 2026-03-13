@@ -123,6 +123,16 @@
             return volNum >= 1000 ? 'vol-high' : 'vol-low';
         }
 
+        // 거래대금 표시용 포맷 (억 없으면 자동 붙임)
+        function formatVolume(volStr) {
+            if (!volStr) return '';
+            const s = volStr.trim();
+            if (s.includes('억')) return s;
+            const num = parseFloat(s.replace(/[^0-9.]/g, ''));
+            if (isNaN(num)) return s;
+            return num.toLocaleString() + '억';
+        }
+
         function createCardHTML(card) {
             let contentHTML = '';
 
@@ -161,10 +171,10 @@
                             <span class="font-black text-slate-800 text-3xl tracking-tight" style="flex: 1; min-width: 0;">
                                 ${item.name}
                             </span>
-                            <span class="${vClass} text-xl font-semibold text-right flex-shrink-0" style="width: 120px;">
-                                ${item.volume || ''}
+                            <span class="${vClass} text-xl font-semibold text-right flex-shrink-0" style="width: 130px;">
+                                ${formatVolume(item.volume)}
                             </span>
-                            <span class="font-bold text-red-500 text-3xl font-mono text-right flex-shrink-0" style="width: 110px;">
+                            <span class="font-bold text-red-500 text-3xl font-mono text-right flex-shrink-0" style="width: 120px; margin-left: 8px;">
                                 ${item.change_rate}
                             </span>
                         </div>
@@ -195,8 +205,8 @@
                     <div class="individual-item">
                         <div class="individual-header">
                             <span class="font-black text-slate-900 text-3xl" style="flex: 1; min-width: 0;">${item.name}</span>
-                            <span class="${vClass} text-xl font-semibold text-right flex-shrink-0" style="width: 120px;">${item.volume || ''}</span>
-                            <span class="font-bold text-red-500 text-3xl font-mono text-right flex-shrink-0" style="width: 110px;">${item.change_rate}</span>
+                            <span class="${vClass} text-xl font-semibold text-right flex-shrink-0" style="width: 130px;">${formatVolume(item.volume)}</span>
+                            <span class="font-bold text-red-500 text-3xl font-mono text-right flex-shrink-0" style="width: 120px; margin-left: 8px;">${item.change_rate}</span>
                         </div>
                         <div class="individual-desc speech-bubble">
                             <p class="text-xl font-bold text-slate-700 leading-snug break-keep text-center">

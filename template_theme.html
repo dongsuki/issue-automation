@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>장중 강세테마 동향</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f1f5f9;
+            color: #334155;
+            margin: 0;
+            padding: 0;
+        }
+        #page {
+            width: 1280px;
+            height: 1750px;
+            background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+        }
+        #capture-area {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+        }
+        .clean-card {
+            background-color: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        .speech-bubble {
+            position: relative;
+            background: #eff6ff;
+            border-radius: 16px;
+            padding: 20px 24px;
+            border: 1px solid #dbeafe;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .individual-item {
+            height: 185px;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 8px;
+        }
+        .individual-header {
+            height: 38px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .individual-desc {
+            height: 130px;
+            flex-shrink: 0;
+        }
+        .vol-high { color: #ea580c; }
+        .vol-low { color: #94a3b8; }
+    </style>
+</head>
+<body class="p-0 m-0">
+
+    <div id="page">
+    <div id="capture-area" class="p-12 relative">
+
+        <!-- 헤더 영역 -->
+        <header class="flex items-end justify-between mb-10 pb-6 border-b-2 border-slate-200">
+            <div>
+                <div class="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-1.5 rounded-full text-xl font-bold mb-3 shadow-sm">
+                    <i class="fa-regular fa-calendar-check"></i>
+                    <span id="date-display">2025.12.03</span>
+                </div>
+                <h1 class="text-6xl font-black tracking-tight text-slate-800">
+                    장중 <span class="text-red-500">강세테마</span> 동향
+                </h1>
+            </div>
+            <div class="text-right">
+                <div class="text-slate-500 font-semibold text-xl mb-1 flex items-center justify-end gap-2">
+                    <i class="fa-solid fa-chart-simple"></i> Daily Market Brief
+                </div>
+                <p class="text-2xl font-bold text-slate-400">By. 상한가추월차선</p>
+            </div>
+        </header>
+
+        <!-- 그리드 컨테이너 -->
+        <div id="card-container" class="grid grid-cols-2 gap-8 content-start">
+        </div>
+    </div>
+
+    <script>
+        const cardsData = /*CARDS_DATA_PLACEHOLDER*/[];
+        const dateStr = "/*DATE_PLACEHOLDER*/";
+
+        if (dateStr) {
+            document.getElementById('date-display').innerText = dateStr;
+        }
+
+        // 거래대금 문자열에서 숫자 파싱 (억 단위)
+        function parseVolume(volStr) {
+            if (!volStr) return 0;
+            const num = parseFloat(volStr.replace(/[^0-9.]/g, ''));
+            return isNaN(num) ? 0 : num;
+        }
+
+        // 등락률 문자열에서 숫자 파싱
+        function parseRate(rateStr) {
+            if (!rateStr) return 0;
+            const num = parseFloat(rateStr.replace(/[^0-9.\-]/g, ''));
+            return isNaN(num) ? 0 : num;
+        }
+
+        // 거래대금 색상 클래스
+        function volColorClass(volNum) {
+            return volNum >= 1000 ? 'vol-high' : 'vol-low';
+        }
+
+        function createCardHTML(card) {
+            let contentHTML = '';
+
+            // 테마형: 합산 계산
+            let summaryHTML = '';
+            if (card.card_type === "theme") {
+                let totalRate = 0;
+                let totalVol = 0;
+                card.stocks.forEach(s => {
+                    totalRate += parseRate(s.change_rate);
+                    totalVol += parseVolume(s.volume);
+                });
+                const totalVolClass = volColorClass(totalVol);
+                const volBg = totalVol >= 1000 ? 'bg-orange-500' : 'bg-slate-400';
+                summaryHTML = `
+                    <div class="ml-auto flex-shrink-0 flex items-center gap-2">
+                        <span class="${volBg} text-white font-black text-2xl rounded-xl px-4 py-1.5">${Math.round(totalVol).toLocaleString()}억</span>
+                        <span class="bg-red-500 text-white font-black text-2xl rounded-xl px-4 py-1.5">+${totalRate.toFixed(1)}%</span>
+                    </div>
+                `;
+            }
+
+            // TYPE A: 테마형
+            if (card.card_type === "theme") {
+                const listItems = card.stocks.map(item => {
+                    const rateNum = parseRate(item.change_rate);
+                    const barWidth = Math.min(Math.max((rateNum / 30) * 100, 10), 100);
+                    const barColorClass = rateNum >= 29 ? 'bg-red-500' : 'bg-red-400';
+                    const bgBarColor = rateNum >= 29 ? 'bg-red-100' : 'bg-slate-100';
+                    const volNum = parseVolume(item.volume);
+                    const vClass = volColorClass(volNum);
+
+                    return `
+                    <div class="py-3 border-b border-slate-100 last:border-0">
+                        <div class="flex items-center mb-2">
+                            <span class="font-black text-slate-800 text-3xl tracking-tight" style="flex: 1; min-width: 0;">
+                                ${item.name}
+                            </span>
+                            <span class="${vClass} text-xl font-semibold text-right flex-shrink-0" style="width: 120px;">
+                                ${item.volume || ''}
+                            </span>
+                            <span class="font-bold text-red-500 text-3xl font-mono text-right flex-shrink-0" style="width: 110px;">
+                                ${item.change_rate}
+                            </span>
+                        </div>
+                        <div class="w-full ${bgBarColor} rounded-full h-4 overflow-hidden">
+                            <div class="${barColorClass} h-4 rounded-full opacity-90" style="width: ${barWidth}%"></div>
+                        </div>
+                    </div>
+                `}).join('');
+
+                contentHTML = `
+                    <div class="speech-bubble mb-5">
+                        <p class="text-2xl font-bold text-slate-700 leading-relaxed break-keep text-center">
+                            ${card.main_issue || ''}
+                        </p>
+                    </div>
+                    <div class="space-y-0 px-1">
+                        ${listItems}
+                    </div>
+                `;
+            }
+            // TYPE B: 개별이슈형
+            else if (card.card_type === "individual") {
+                contentHTML = card.stocks.map(item => {
+                    const volNum = parseVolume(item.volume);
+                    const vClass = volColorClass(volNum);
+
+                    return `
+                    <div class="individual-item">
+                        <div class="individual-header">
+                            <span class="font-black text-slate-900 text-3xl" style="flex: 1; min-width: 0;">${item.name}</span>
+                            <span class="${vClass} text-xl font-semibold text-right flex-shrink-0" style="width: 120px;">${item.volume || ''}</span>
+                            <span class="font-bold text-red-500 text-3xl font-mono text-right flex-shrink-0" style="width: 110px;">${item.change_rate}</span>
+                        </div>
+                        <div class="individual-desc speech-bubble">
+                            <p class="text-xl font-bold text-slate-700 leading-snug break-keep text-center">
+                                ${item.issue || ''}
+                            </p>
+                        </div>
+                    </div>
+                `}).join('');
+                contentHTML = `<div class="flex flex-col justify-start gap-3">${contentHTML}</div>`;
+            }
+
+            const headerColorClass = card.card_type === "theme" ? "text-blue-600" : "text-slate-700";
+            const iconClass = card.card_type === "theme" ? "fa-layer-group" : "fa-check-double";
+            const bottomBarColor = card.card_type === "theme" ? "bg-blue-500" : "bg-slate-400";
+
+            return `
+                <div class="clean-card overflow-hidden flex flex-col h-[750px]">
+                    <div class="px-8 pt-7 pb-4 border-b border-slate-100 bg-white">
+                        <div class="flex items-center">
+                            <h2 class="text-5xl font-black tracking-tight ${headerColorClass}">
+                                ${card.group_name}
+                            </h2>
+                            ${summaryHTML}
+                        </div>
+                    </div>
+                    <div class="px-8 py-6 flex-1 bg-white">
+                        ${contentHTML}
+                    </div>
+                    <div class="h-2 w-full ${bottomBarColor}"></div>
+                </div>
+            `;
+        }
+
+        function renderCards() {
+            const container = document.getElementById('card-container');
+            container.innerHTML = '';
+            cardsData.forEach(card => {
+                const cardHTML = createCardHTML(card);
+                container.innerHTML += cardHTML;
+            });
+        }
+
+        if (cardsData.length > 0) {
+            renderCards();
+        }
+    </script>
+    </div>
+    </div>
+</body>
+</html>

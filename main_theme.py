@@ -109,6 +109,16 @@ def create_test_data():
             ]
         ),
         CardData(
+            card_type='theme',
+            group_name='기타',
+            main_issue='기타 이슈 종목 모음',
+            stocks=[
+                StockItem('A종목', '5.2%', '120억'),
+                StockItem('B종목', '-3.1%', '80억'),
+                StockItem('C종목', '-7.5%', '1,200억'),
+            ]
+        ),
+        CardData(
             card_type='individual',
             group_name='개별이슈',
             stocks=[

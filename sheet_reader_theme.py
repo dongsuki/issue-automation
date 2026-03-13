@@ -144,7 +144,7 @@ class SheetReaderTheme:
 
         cards: List[CardData] = []
 
-        # 테마 그룹을 등락률 합계 기준으로 정렬
+        # 테마 그룹을 등락률 합계 기준으로 정렬 (기타는 제일 뒤로)
         def get_group_rate_sum(group_data):
             total = 0.0
             for stock in group_data['stocks']:
@@ -157,8 +157,7 @@ class SheetReaderTheme:
 
         sorted_theme_groups = sorted(
             theme_groups.items(),
-            key=lambda x: get_group_rate_sum(x[1]),
-            reverse=True
+            key=lambda x: (x[0] == '기타', -get_group_rate_sum(x[1]) if x[0] != '기타' else 0),
         )
 
         def parse_rate(stock):

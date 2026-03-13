@@ -111,10 +111,11 @@
             return isNaN(num) ? 0 : num;
         }
 
-        // 등락률 문자열에서 숫자 파싱
+        // 등락률 문자열에서 숫자 파싱 (부호 포함)
         function parseRate(rateStr) {
             if (!rateStr) return 0;
-            const num = parseFloat(rateStr.replace(/[^0-9.\-]/g, ''));
+            const cleaned = rateStr.replace(/[^0-9.\-]/g, '');
+            const num = parseFloat(cleaned);
             return isNaN(num) ? 0 : num;
         }
 
@@ -147,10 +148,12 @@
                 });
                 const totalVolClass = volColorClass(totalVol);
                 const volBg = totalVol >= 1000 ? 'bg-orange-500' : 'bg-slate-400';
+                const rateBg = totalRate >= 0 ? 'bg-red-500' : 'bg-blue-500';
+                const rateSign = totalRate >= 0 ? '+' : '';
                 summaryHTML = `
                     <div class="ml-auto flex-shrink-0 flex items-center gap-2">
                         <span class="${volBg} text-white font-black text-2xl rounded-xl px-4 py-1.5">${Math.round(totalVol).toLocaleString()}억</span>
-                        <span class="bg-red-500 text-white font-black text-2xl rounded-xl px-4 py-1.5">+${totalRate.toFixed(1)}%</span>
+                        <span class="${rateBg} text-white font-black text-2xl rounded-xl px-4 py-1.5">${rateSign}${totalRate.toFixed(1)}%</span>
                     </div>
                 `;
             }
@@ -159,9 +162,12 @@
             if (card.card_type === "theme") {
                 const listItems = card.stocks.map(item => {
                     const rateNum = parseRate(item.change_rate);
-                    const barWidth = Math.min(Math.max((rateNum / 30) * 100, 10), 100);
-                    const barColorClass = rateNum >= 29 ? 'bg-red-500' : 'bg-red-400';
-                    const bgBarColor = rateNum >= 29 ? 'bg-red-100' : 'bg-slate-100';
+                    const absRate = Math.abs(rateNum);
+                    const barWidth = Math.min(Math.max((absRate / 30) * 100, 10), 100);
+                    const isNeg = rateNum < 0;
+                    const barColorClass = isNeg ? 'bg-blue-400' : (rateNum >= 29 ? 'bg-red-500' : 'bg-red-400');
+                    const bgBarColor = isNeg ? 'bg-blue-50' : (rateNum >= 29 ? 'bg-red-100' : 'bg-slate-100');
+                    const rateColorClass = isNeg ? 'text-blue-500' : 'text-red-500';
                     const volNum = parseVolume(item.volume);
                     const vClass = volColorClass(volNum);
 
@@ -174,7 +180,7 @@
                             <span class="${vClass} text-xl font-semibold text-right flex-shrink-0" style="width: 130px;">
                                 ${formatVolume(item.volume)}
                             </span>
-                            <span class="font-bold text-red-500 text-3xl font-mono text-right flex-shrink-0" style="width: 120px; margin-left: 8px;">
+                            <span class="font-bold ${rateColorClass} text-3xl font-mono text-right flex-shrink-0" style="width: 120px; margin-left: 8px;">
                                 ${item.change_rate}
                             </span>
                         </div>
